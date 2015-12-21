@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/helm/helm/chart"
 	"github.com/helm/helm/test"
 	"github.com/helm/helm/util"
 
@@ -46,7 +47,20 @@ func TestLintMissingReadme(t *testing.T) {
 }
 
 func TestLintMismatchNameAndDir(t *testing.T) {
+	tmpHome := test.CreateTmpHome()
+	chartName := "badChart"
 
+	Create(chartName, tmpHome)
+	chartFilePath := util.WorkspaceChartDirectory(tmpHome, chartName, "Chart.yaml")
+	chartFile, _ := chart.LoadChartfile(chartFilePath)
+	chartFile.Name = "steve"
+	chartFile.Save(chartFilePath)
+
+	output := test.CaptureOutput(func() {
+		Lint(util.WorkspaceChartDirectory(tmpHome, chartName))
+	})
+
+	test.ExpectContains(t, output, "Chart name doesn't match directory")
 }
 
 func TestLintMissingChartYaml(t *testing.T) {
