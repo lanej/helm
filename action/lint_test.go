@@ -15,7 +15,6 @@ import (
 
 func TestLintSuccess(t *testing.T) {
 	tmpHome := test.CreateTmpHome()
-	test.FakeUpdate(tmpHome)
 
 	chartName := "goodChart"
 
@@ -32,7 +31,6 @@ func TestLintSuccess(t *testing.T) {
 
 func TestLintMissingReadme(t *testing.T) {
 	tmpHome := test.CreateTmpHome()
-	test.FakeUpdate(tmpHome)
 
 	chartName := "badChart"
 
@@ -47,9 +45,12 @@ func TestLintMissingReadme(t *testing.T) {
 	test.ExpectContains(t, output, "A README file was not found")
 }
 
+func TestLintMismatchNameAndDir(t *testing.T) {
+
+}
+
 func TestLintMissingChartYaml(t *testing.T) {
 	tmpHome := test.CreateTmpHome()
-	test.FakeUpdate(tmpHome)
 
 	chartName := "badChart"
 
@@ -67,7 +68,6 @@ func TestLintMissingChartYaml(t *testing.T) {
 
 func TestLintMissingManifestDirectory(t *testing.T) {
 	tmpHome := test.CreateTmpHome()
-	test.FakeUpdate(tmpHome)
 
 	chartName := "brokeChart"
 
@@ -85,7 +85,6 @@ func TestLintMissingManifestDirectory(t *testing.T) {
 
 func TestLintEmptyChartYaml(t *testing.T) {
 	tmpHome := test.CreateTmpHome()
-	test.FakeUpdate(tmpHome)
 
 	chartName := "badChart"
 
