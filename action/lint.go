@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -47,40 +48,57 @@ func LintAll(homedir string) {
 //
 // - chartPath path to chart directory
 func Lint(chartPath string) {
-	v := new(ChartValidation)
-	v.Path = chartPath
+	v := Validation{Path: chartPath}
 
-	chartYamlValidation := v.AddError("Chart.yaml is present", func(path string, v *Validation) bool {
+	directoryValidation := v.AddError("Directory exists", func(v *Validation) bool {
+		stat, err := os.Stat(v.Path)
+
+		return err == nil && stat.IsDir()
+	})
+
+	chartYamlValidation := directoryValidation.AddError("Chart.yaml is present", func(v *Validation) bool {
 		stat, err := os.Stat(v.ChartYamlPath())
 
 		return err == nil && stat.Mode().IsRegular()
 	})
 
-	chartYamlValidation.AddError("Has name", func(path string, v *Validation) bool {
+	chartYamlValidation.AddError("Has name", func(v *Validation) bool {
 		chartfile, err := v.Chartfile()
 
 		return err == nil && chartfile.Name != ""
 	})
 
-	chartYamlValidation.AddWarning("Has description", func(path string, v *Validation) bool {
+	chartYamlValidation.AddWarning("Has description", func(v *Validation) bool {
 		chartfile, err := v.Chartfile()
 
 		return err == nil && chartfile.Description != ""
 	})
 
-	chartYamlValidation.AddWarning("Has maintainers", func(path string, v *Validation) bool {
+	chartYamlValidation.AddWarning("Has maintainers", func(v *Validation) bool {
 		chartfile, err := v.Chartfile()
 
 		return err == nil && chartfile.Maintainers != nil
 	})
 
-	chartYamlValidation.AddError("Has version", func(path string, v *Validation) bool {
+	chartYamlValidation.AddError("Has version", func(v *Validation) bool {
 		chartfile, err := v.Chartfile()
 
 		return err == nil && chartfile.Version != ""
 	})
 
-	if v.Valid() {
+	valid := v.Validate(func(valid bool, v *Validation) {
+		message := fmt.Sprintf(v.Message+" : %v", valid)
+
+		if valid {
+			log.Info(message)
+		} else if v.Level == errorLevel {
+			log.Err(message)
+		} else {
+			log.Warn(message)
+		}
+	})
+
+	if valid {
 		log.Info("Chart [%s] has passed all necessary checks", v.ChartName())
 	} else {
 		log.Info("Chart [%s] is not completely valid", v.ChartName())
